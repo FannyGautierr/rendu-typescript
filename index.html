@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Gestion de Tâches Avancée</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+    <header>
+        <h1>Gestion de Tâches</h1>
+    </header>
+    <main>
+        <div id="toast" class="toast" style="display:none"></div>
+        <section id="category-creation">
+            <h2>Ajouter une catégorie</h2>
+            <form id="categoryForm">
+                <input type="text" id="categoryTitle" placeholder="Titre de la catégorie">
+                <button type="submit">Add category</button>
+            </form>
+        </section>
+        <section id="task-creation">
+            <h2>Ajouter une Tâche</h2>
+            <form id="taskForm">
+                <input type="text" id="taskTitle" placeholder="Titre de la tâche" required>
+                <textarea id="taskDescription" placeholder="Description de la tâche"></textarea>
+                <input type="date" id="taskDueDate">
+                <select id="taskPriority">
+                    <option value="low">Faible</option>
+                    <option value="medium" selected>Moyenne</option>
+                    <option value="high">Haute</option>
+                </select>
+                <select id="categoryChoice">
+
+                </select>
+                <button type="submit">Ajouter Tâche</button>
+            </form>
+        </section>
+        <section id="task-filter">
+            <h2>Filtrer les Tâches</h2>
+            <form id="filterForm">
+                <label for="filterPriority">Filtrer par Priorité :</label>
+                <select id="filterPriority">
+                    <option value="all">Toutes</option>
+                    <option value="High">Haute</option>
+                    <option value="Mid">Moyenne</option>
+                    <option value="Low">Faible</option>
+                </select>
+
+                <label for="filterCategory">Filtrer par Priorité :</label>
+                <select id="filterCategory">
+                   
+                </select>
+
+                <label for="filterDate">Filtrer par Date :</label>
+                <input type="date" id="filterDate">
+
+                <!-- <button type="button" id="applyFilter">Appliquer Filtre</button> -->
+            </form>
+        </section>
+        <section id="task-search">
+            <h2>Rechercher des Tâches</h2>
+            <div id="searchContainer">
+                <input type="text" id="searchInput" placeholder="Entrer un mot-clé..." />
+                <button type="button" id="searchButton">Rechercher</button>
+            </div>
+        </section>
+        <section id="task-list">
+            <h2>Liste des Tâches</h2>
+            <div id="tasks">
+            </div>
+        </section>
+       
+    </main>
+    <footer>
+        <p>&copy; 2024 Application de Gestion de Tâches</p>
+    </footer>
+    <script type="module" src="app.js"></script>
+</body>
+
+</html>

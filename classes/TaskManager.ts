@@ -1,4 +1,5 @@
-import {Task} from "../interface/Tasks";
+import {Task} from "../interface/Tasks.js";
+import { Priority } from "../interface/Tasks.js";
 export default class TaskManager {
     constructor(private _tasks: Task[]) {
         //load task from localstorgae on init
@@ -25,6 +26,31 @@ export default class TaskManager {
             console.error("Failed to load tasks from localStorage:", error);
         }
     }
+
+    // random function that might be usefull
+    // use the enum in the app by getting it from de task manager, might be overkilled or unnecessary dont know 
+    //_________________________________________________________________________________________________________//
+
+    public getPriorityString(priority: string): string {
+        switch (priority) {
+            case Priority.High: return 'high';
+            case Priority.Mid: return 'medium';
+            case Priority.Low: return 'low';
+            default: return 'medium'; 
+        }
+    }
+    
+    public toPriority(value: string): Priority | undefined {
+        switch (value){
+          case 'high':
+              return Priority.High;
+          case 'medium':
+              return Priority.Mid;
+          case 'low':
+              return Priority.Low
+        }
+    }
+    //_________________________________________________________________________________________________________//
     // ''''''''''''''''CRUD''''''''''''''''''''''''
     public deleteTask(id: string): void {
         try {

@@ -1,5 +1,4 @@
 import TaskManager from "./classes/TaskManager.js";
-import { Priority } from "./interface/Tasks.js";
 import CategoryManager from "./classes/CategoryManager.js";
 // init form  so we can watch them with an addEventListener
 const taskForm = document.querySelector('#taskForm');
@@ -30,6 +29,7 @@ const tasksContainer = document.querySelector('#tasks');
 // searchInput.addEventListener('input',()=>{
 //     filterTaskList(filterByPriority.value, filterByDate.value, searchInput.value,filterByCategory.value)
 // })
+// better ?
 const elements = [filterByPriority, filterByDate, filterByCategory, searchInput];
 elements.forEach(element => {
     const eventType = element === searchInput ? 'input' : 'change';
@@ -45,7 +45,7 @@ taskForm === null || taskForm === void 0 ? void 0 : taskForm.addEventListener('s
 categoryForm === null || categoryForm === void 0 ? void 0 : categoryForm.addEventListener("submit", (event) => {
     submitCategory(event);
 });
-//_______________________________________________________________________________________________________//
+//___________________________________DOM management____________________________________________________________________//
 // breakdown the process of displaying cards in chunk 
 // 1st - Create the element ( can be different type (input,div, button .... this is why the K extend ...))
 function createElementWithContent(tag, content, name) {
@@ -67,7 +67,7 @@ function createButton(buttonText) {
 function createTaskCard(task) {
     var _a;
     const div = document.createElement("div");
-    div.className = "task " + getPriorityClass(task.priority);
+    div.className = "task " + task.priority.toLowerCase();
     div.dataset.id = task.id;
     const categoryContent = task.category ? task.category.name : 'Undefined'; // Assuming 'name' is a property of 'Category'
     const title = createElementWithContent("h3", task.title, 'title');
@@ -81,6 +81,15 @@ function createTaskCard(task) {
     div.append(title, description, endDate, editButton, deleteButton, category);
     (_a = document.querySelector('#tasks')) === null || _a === void 0 ? void 0 : _a.append(div);
 }
+// delete a card  from the DOM and remove it from memory
+function deleteCard(id) {
+    const card = document.querySelector(`[data-id="${id}"]`);
+    if (card == null)
+        throw new Error;
+    else
+        card.remove();
+    taskManager.deleteTask(id);
+}
 // display all the new Cards
 let displayTaskList = (tasksToShow = taskManager.tasks) => {
     const tasksContainer = document.querySelector('#tasks');
@@ -93,7 +102,7 @@ let displayTaskList = (tasksToShow = taskManager.tasks) => {
 let filterTaskList = (filterPriority, filterDate, searchKeyword, filterCategory) => {
     let filteredTasks = taskManager.tasks;
     if (filterPriority && filterPriority !== 'all') {
-        filteredTasks = filteredTasks.filter(task => getPriorityClass(task.priority).toLowerCase() === filterPriority.toLowerCase());
+        filteredTasks = filteredTasks.filter(task => task.priority.toLowerCase() === filterPriority.toLowerCase());
     }
     if (filterDate) {
         filteredTasks = filteredTasks.filter(task => {
@@ -110,62 +119,6 @@ let filterTaskList = (filterPriority, filterDate, searchKeyword, filterCategory)
     }
     displayTaskList(filteredTasks);
 };
-// submit a new task / handle the creation and the edit at the same time 
-function submitTask(event) {
-    var _a;
-    event.preventDefault();
-    const categories = categoryManager.listCategories();
-    const selectedCategoryName = document.getElementById('categoryChoice').value;
-    const selectedCategory = categories.find((item) => item.id === selectedCategoryName) || categories.find((item) => item.name === 'Undefined');
-    let task = {
-        priority: toPriority(document.getElementById('taskPriority').value),
-        description: document.getElementById('taskDescription').value,
-        title: document.getElementById('taskTitle').value,
-        end_date: ((_a = document.getElementById('taskDueDate')) === null || _a === void 0 ? void 0 : _a.valueAsNumber) || new Date().getDate(), // if no date put today date
-        category: selectedCategory
-    };
-    if (task.description === '') {
-        showToast('You have to enter a description to continue', 5000);
-        return;
-    }
-    if (task.title === '') {
-        showToast('You have to enter a title to continue', 5000);
-        return;
-    }
-    if (taskForm === null || taskForm === void 0 ? void 0 : taskForm.hasAttribute('data-editing-id')) {
-        taskManager.editTask((taskForm === null || taskForm === void 0 ? void 0 : taskForm.getAttribute('data-editing-id')) || '', task);
-        taskForm === null || taskForm === void 0 ? void 0 : taskForm.removeAttribute('data-editing-id');
-        document.querySelector('#taskForm button[type="submit"]').textContent = 'Ajouter Tâche';
-    }
-    else {
-        taskManager.addTask(task);
-    }
-    displayTaskList();
-    taskForm === null || taskForm === void 0 ? void 0 : taskForm.reset();
-}
-// delete a card  from the DOM and remove it from memory
-function deleteCard(id) {
-    const card = document.querySelector(`[data-id="${id}"]`);
-    if (card == null)
-        throw new Error;
-    else
-        card.remove();
-    taskManager.deleteTask(id);
-}
-// submit a new category, repopulate  the select box with options from the manager
-function submitCategory(event) {
-    event.preventDefault();
-    let category = {
-        name: document.getElementById('categoryTitle').value,
-    };
-    if (category.name === '') {
-        showToast('You have to enter a name for the category', 5000);
-        return;
-    }
-    categoryManager.addCategory(category);
-    categoryForm === null || categoryForm === void 0 ? void 0 : categoryForm.reset();
-    putOptionInSelect();
-}
 // generate the options and  add them in the select form and the filter, it's generate when you add a new one // see in sumbit Category
 function putOptionInSelect() {
     let localStorageDataCategories = localStorage.getItem('categories') || '[]';
@@ -215,35 +168,56 @@ function showToast(message, duration = 3000) {
         }, 600);
     }, duration);
 }
-// use the enum in the app by getting it from de task manager, might be overkilled or unnecessary dont know 
-//_________________________________________________________________________________________________________//
-function getPriorityString(priority) {
-    switch (priority) {
-        case Priority.High: return 'high';
-        case Priority.Mid: return 'medium';
-        case Priority.Low: return 'low';
-        default: return 'medium';
+//____________________________________________TASKMANAGER_______________________________________________________________
+// submit a new task / handle the creation and the edit at the same time 
+function submitTask(event) {
+    var _a;
+    event.preventDefault();
+    const categories = categoryManager.listCategories();
+    const selectedCategoryName = document.getElementById('categoryChoice').value;
+    const selectedCategory = categories.find((item) => item.id === selectedCategoryName) || categories.find((item) => item.name === 'Undefined');
+    let task = {
+        priority: taskManager.toPriority(document.getElementById('taskPriority').value),
+        description: document.getElementById('taskDescription').value,
+        title: document.getElementById('taskTitle').value,
+        end_date: ((_a = document.getElementById('taskDueDate')) === null || _a === void 0 ? void 0 : _a.valueAsNumber) || new Date().getDate(), // if no date put today date
+        category: selectedCategory
+    };
+    if (task.description === '') {
+        showToast('You have to enter a description to continue', 5000);
+        return;
     }
-}
-function getPriorityClass(priority) {
-    switch (priority) {
-        case 'High': return 'high';
-        case 'Mid': return 'mid';
-        case 'Low': return 'low';
-        default: return '';
+    if (task.title === '') {
+        showToast('You have to enter a title to continue', 5000);
+        return;
     }
-}
-function toPriority(value) {
-    switch (value) {
-        case 'high':
-            return Priority.High;
-        case 'medium':
-            return Priority.Mid;
-        case 'low':
-            return Priority.Low;
+    if (taskForm === null || taskForm === void 0 ? void 0 : taskForm.hasAttribute('data-editing-id')) {
+        taskManager.editTask((taskForm === null || taskForm === void 0 ? void 0 : taskForm.getAttribute('data-editing-id')) || '', task);
+        taskForm === null || taskForm === void 0 ? void 0 : taskForm.removeAttribute('data-editing-id');
+        document.querySelector('#taskForm button[type="submit"]').textContent = 'Ajouter Tâche';
+        showToast('Task succesufully edited !', 2000);
     }
+    else {
+        taskManager.addTask(task);
+        showToast('Task succesufully created !', 2000);
+    }
+    displayTaskList();
+    taskForm === null || taskForm === void 0 ? void 0 : taskForm.reset();
 }
-//_________________________________________________________________________________________________________//
+// submit a new category, repopulate  the select box with options from the manager
+function submitCategory(event) {
+    event.preventDefault();
+    let category = {
+        name: document.getElementById('categoryTitle').value,
+    };
+    if (category.name === '') {
+        showToast('You have to enter a name for the category', 5000);
+        return;
+    }
+    categoryManager.addCategory(category);
+    categoryForm === null || categoryForm === void 0 ? void 0 : categoryForm.reset();
+    putOptionInSelect();
+}
 // add event listener for edit and delete button / the edit is not really user friendly , it's populate the creation form , not really intuitive
 //+ the function can be refacto i think
 if (tasksContainer) {
@@ -267,7 +241,7 @@ if (tasksContainer) {
                     document.getElementById('taskTitle').value = task.title;
                     document.getElementById('taskDescription').value = task.description;
                     document.getElementById('taskDueDate').value = new Date(task.end_date).toISOString().split('T')[0];
-                    document.getElementById('taskPriority').value = getPriorityString(task.priority);
+                    document.getElementById('taskPriority').value = taskManager.getPriorityString(task.priority);
                     taskForm === null || taskForm === void 0 ? void 0 : taskForm.setAttribute('data-editing-id', taskId);
                     document.querySelector('#taskForm button[type="submit"]').textContent = 'Modifier Tâche';
                 }

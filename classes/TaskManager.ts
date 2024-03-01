@@ -1,7 +1,4 @@
 import {Task} from "../interface/Tasks";
-import CategoryManager from "./CategoryManager.js";
-
-
 export default class TaskManager {
     constructor(private _tasks: Task[]) {
         //load task from localstorgae on init
@@ -11,37 +8,66 @@ export default class TaskManager {
     public get tasks(): Task[] {
         return this._tasks
     }
-    addTask(task: Task): void {
-        const newTask: Task = {
-            id: crypto.randomUUID(), 
-            ...task
-        };
-        this.tasks.push(newTask);
-        this.saveTasks()
-    }
-
     private saveTasks(): void {
-        localStorage.setItem('tasks', JSON.stringify(this.tasks));
+        try {
+            localStorage.setItem('tasks', JSON.stringify(this._tasks));
+        } catch (error) {
+            console.error("Failed to save tasks:", error);
+        }
     }
     private loadTasks(): void {
-        const tasksJson = localStorage.getItem('tasks');
-        if (tasksJson) {
-            this._tasks = JSON.parse(tasksJson);
+        try {
+            const tasksJson = localStorage.getItem('tasks');
+            if (tasksJson) {
+                this._tasks = JSON.parse(tasksJson);
+            }
+        } catch (error) {
+            console.error("Failed to load tasks from localStorage:", error);
         }
     }
     // ''''''''''''''''CRUD''''''''''''''''''''''''
     public deleteTask(id: string): void {
-        this._tasks = this._tasks.filter((t: Task) => t.id !== id);
-        this.saveTasks();
+        try {
+            this._tasks = this._tasks.filter((t: Task) => t.id !== id);
+            this.saveTasks();
+        } catch (error) {
+            console.error("Failed to delete task:", error);
+        }
     }
 
     public editTask(id:string, content: Task): void{
-        const index = this._tasks.findIndex((t: Task)=> t.id === id);
-        this._tasks[index] = content 
-        this.saveTasks();
+        try {
+            const index = this._tasks.findIndex((t: Task) => t.id === id);
+            if (index !== -1) {
+                this._tasks[index] = { ...content, id }; // Ensure the id remains unchanged
+                this.saveTasks();
+            } else {
+                console.warn(`Task with id ${id} not found.`);
+            }
+        } catch (error) {
+            console.error("Failed to edit task:", error);
+        }
     }
 
     public getTaskById(id: string): Task | undefined {
-        return this._tasks.find((t: Task) => t.id === id);
+        try {
+            return this._tasks.find((t: Task) => t.id === id);
+        } catch (error) {
+            console.error("Failed to get task by ID:", error);
+            return undefined;
+        }
+    }
+
+    public addTask(task: Task): void {
+        try {
+            const newTask: Task = {
+                id: crypto.randomUUID(),
+                ...task
+            };
+            this._tasks.push(newTask);
+            this.saveTasks();
+        } catch (error) {
+            console.error("Failed to add task:", error);
+        }
     }
 }

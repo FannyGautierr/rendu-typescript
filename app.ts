@@ -44,7 +44,7 @@ const tasksContainer: HTMLElement  = document.querySelector('#tasks') as HTMLEle
 const elements = [filterByPriority, filterByDate, filterByCategory, searchInput];
 
 elements.forEach(element => {
-    const eventType = element === searchInput ? 'input' : 'change';
+    const eventType: string = element === searchInput ? 'input' : 'change';
     element.addEventListener(eventType, () => {
         filterTaskList(filterByPriority.value, filterByDate.value, searchInput.value, filterByCategory.value);
     });
